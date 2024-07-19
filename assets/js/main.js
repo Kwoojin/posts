@@ -1,117 +1,58 @@
-/*
-	Strata by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
-*/
+// Fix DOM matches function
+if (!Element.prototype.matches) {
+  Element.prototype.matches =
+    Element.prototype.matchesSelector ||
+    Element.prototype.mozMatchesSelector ||
+    Element.prototype.msMatchesSelector ||
+    Element.prototype.oMatchesSelector ||
+    Element.prototype.webkitMatchesSelector ||
+    function(s) {
+      var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+        i = matches.length;
+      while (--i >= 0 && matches.item(i) !== this) {}
+      return i > -1;
+    };
+}
 
-(function($) {
+// Get Scroll position
+function getScrollPos() {
+  var supportPageOffset = window.pageXOffset !== undefined;
+  var isCSS1Compat = ((document.compatMode || "") === "CSS1Compat");
 
-	var $window = $(window),
-		$body = $('body'),
-		$header = $('#header'),
-		$footer = $('#footer'),
-		$main = $('#main'),
-		settings = {
+  var x = supportPageOffset ? window.pageXOffset : isCSS1Compat ? document.documentElement.scrollLeft : document.body.scrollLeft;
+  var y = supportPageOffset ? window.pageYOffset : isCSS1Compat ? document.documentElement.scrollTop : document.body.scrollTop;
 
-			// Parallax background effect?
-				parallax: true,
+  return { x: x, y: y };
+}
 
-			// Parallax factor (lower = more intense, higher = less intense).
-				parallaxFactor: 20
+var _scrollTimer = [];
 
-		};
+// Smooth scroll
+function smoothScrollTo(y, time) {
+  time = time == undefined ? 500 : time;
 
-	// Breakpoints.
-		breakpoints({
-			xlarge:  [ '1281px',  '1800px' ],
-			large:   [ '981px',   '1280px' ],
-			medium:  [ '737px',   '980px'  ],
-			small:   [ '481px',   '736px'  ],
-			xsmall:  [ null,      '480px'  ],
-		});
+  var scrollPos = getScrollPos();
+  var count = 60;
+  var length = (y - scrollPos.y);
 
-	// Play initial animations on page load.
-		$window.on('load', function() {
-			window.setTimeout(function() {
-				$body.removeClass('is-preload');
-			}, 100);
-		});
+  function easeInOut(k) {
+    return .5 * (Math.sin((k - .5) * Math.PI) + 1);
+  }
 
-	// Touch?
-		if (browser.mobile) {
+  for (var i = _scrollTimer.length - 1; i >= 0; i--) {
+    clearTimeout(_scrollTimer[i]);
+  }
 
-			// Turn on touch mode.
-				$body.addClass('is-touch');
+  for (var i = 0; i <= count; i++) {
+    (function() {
+      var cur = i;
+      _scrollTimer[cur] = setTimeout(function() {
+        window.scrollTo(
+          scrollPos.x,
+          scrollPos.y + length * easeInOut(cur/count)
+        );
+      }, (time / count) * cur);
+    })();
+  }
+}
 
-			// Height fix (mostly for iOS).
-				window.setTimeout(function() {
-					$window.scrollTop($window.scrollTop() + 1);
-				}, 0);
-
-		}
-
-	// Footer.
-		breakpoints.on('<=medium', function() {
-			$footer.insertAfter($main);
-		});
-
-		breakpoints.on('>medium', function() {
-			$footer.appendTo($header);
-		});
-
-	// Header.
-
-		// Parallax background.
-
-			// Disable parallax on IE (smooth scrolling is jerky), and on mobile platforms (= better performance).
-				if (browser.name == 'ie'
-				||	browser.mobile)
-					settings.parallax = false;
-
-			if (settings.parallax) {
-
-				breakpoints.on('<=medium', function() {
-
-					$window.off('scroll.strata_parallax');
-					$header.css('background-position', '');
-
-				});
-
-				breakpoints.on('>medium', function() {
-
-					$header.css('background-position', 'left 0px');
-
-					$window.on('scroll.strata_parallax', function() {
-						$header.css('background-position', 'left ' + (-1 * (parseInt($window.scrollTop()) / settings.parallaxFactor)) + 'px');
-					});
-
-				});
-
-				$window.on('load', function() {
-					$window.triggerHandler('scroll');
-				});
-
-			}
-
-	// Main Sections: Two.
-
-		// Lightbox gallery.
-			$window.on('load', function() {
-
-				$('#two').poptrox({
-					caption: function($a) { return $a.next('h3').text(); },
-					overlayColor: '#2c2c2c',
-					overlayOpacity: 0.85,
-					popupCloserText: '',
-					popupLoaderText: '',
-					selector: '.work-item a.image',
-					usePopupCaption: true,
-					usePopupDefaultStyling: false,
-					usePopupEasyClose: false,
-					usePopupNav: true,
-					windowMargin: (breakpoints.active('<=small') ? 0 : 50)
-				});
-
-			});
-
-})(jQuery);
