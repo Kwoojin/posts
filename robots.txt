@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://kwoojin.github.io/sitemap.xml
